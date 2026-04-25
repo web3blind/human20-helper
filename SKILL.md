@@ -1,0 +1,54 @@
+---
+name: human20-helper
+description: Human20 operator helper. Uses the Human20 API/MCP surface to inspect workshop state, Pulse, chat JSON, transcripts, progress, and safe push previews. Read-only by default.
+metadata:
+  clawdbot:
+    triggers:
+      - /human20
+      - human20
+---
+
+# Human20 Helper
+
+Use this skill when an agent needs to understand or operate against Human20 through the official API/MCP surface.
+
+The skill is intentionally public and contains no secrets. Configure access through local environment variables or a local `.env` file that is not committed.
+
+Required local configuration:
+
+```env
+HUMAN20_BEARER_TOKEN=
+HUMAN20_MCP_URL=https://human20.app/mcp
+```
+
+## Guardrails
+
+- Use only documented Human20 API/MCP tools.
+- Treat the default workflow as read-only.
+- Never call Telegram directly from the skill.
+- Never store bearer tokens, Telegram tokens, Supabase keys, exports, or private user data in this repository.
+- For outbound user messages, always call `preview_user_message` first and only then `send_user_message` when the operator explicitly confirms.
+- If a tool is missing, report it as an API capability gap instead of inventing data.
+
+## Useful Commands
+
+Run from this repository root:
+
+```powershell
+python scripts/entrypoint.py status
+python scripts/entrypoint.py where-am-i --user-id tg:123
+python scripts/entrypoint.py what-new
+python scripts/entrypoint.py chat-search "openclaw"
+python scripts/entrypoint.py lesson-context lesson-1 --user-id tg:123
+```
+
+## What The Skill Can Inspect
+
+- current workshop/content state;
+- onboarding state and next recommended move;
+- Pulse summaries;
+- workshop chat JSON;
+- lesson and meeting details;
+- transcripts and attachments;
+- homework progress;
+- backend-owned push preview/send tools, when enabled by the API.
