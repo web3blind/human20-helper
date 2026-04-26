@@ -74,22 +74,20 @@ def chat_search(client: Human20McpClient, query: str) -> dict[str, Any]:
 
 
 def lesson_context(client: Human20McpClient, item_id: str, user_id: str | None) -> dict[str, Any]:
-    detail = client.structured_tool("get_content_detail", {"id": item_id})
-    transcript = client.structured_tool("get_transcript", {"id": item_id})
-    homework_args = {"itemId": item_id}
-    if user_id:
-        homework_args["userId"] = user_id
-    homework = client.structured_tool("get_homework_progress", homework_args)
+    detail = client.structured_tool("get_content_detail", {"item_id": item_id})
+    transcript = client.structured_tool("get_transcript", {"item_id": item_id})
+    homework = client.structured_tool("get_homework_progress", {})
 
     item = detail.get("item", {}) if isinstance(detail, dict) else {}
     attachments = detail.get("attachments", []) if isinstance(detail, dict) else []
+    transcript_items = transcript.get("result") if isinstance(transcript, dict) else transcript
     return {
         "id": item_id,
         "title": item.get("title"),
         "href": item.get("href"),
         "attachments": attachments,
-        "transcriptChunks": len(transcript) if isinstance(transcript, list) else None,
-        "transcript": transcript,
+        "transcriptChunks": len(transcript_items) if isinstance(transcript_items, list) else None,
+        "transcript": transcript_items,
         "homework": homework,
         "sources": ["get_content_detail", "get_transcript", "get_homework_progress"],
     }
