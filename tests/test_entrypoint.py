@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import entrypoint  # type: ignore  # noqa: E402
+import human20_mcp_client  # type: ignore  # noqa: E402
 
 
 class StubClient:
@@ -70,6 +71,15 @@ class Human20HelperEntrypointTest(unittest.TestCase):
         self.assertEqual(result["title"], "Lesson")
         self.assertEqual(result["transcriptChunks"], 1)
         self.assertIn("get_homework_progress", result["sources"])
+
+    def test_client_accepts_token_with_bearer_prefix(self) -> None:
+        client = human20_mcp_client.Human20McpClient(
+            base_url="https://human20.app/mcp",
+            bearer_token="Bearer actual-token",
+        )
+
+        self.assertEqual(client.bearer_token, "actual-token")
+        self.assertEqual(client._headers(include_session=False)["Authorization"], "Bearer actual-token")
 
 
 if __name__ == "__main__":

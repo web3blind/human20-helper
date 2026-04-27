@@ -35,7 +35,7 @@ class Human20McpClient:
     def __init__(self, base_url: str | None = None, bearer_token: str | None = None, timeout: int = 30) -> None:
         _load_local_env()
         self.base_url = base_url or os.environ.get("HUMAN20_MCP_URL", DEFAULT_MCP_URL)
-        self.bearer_token = bearer_token or os.environ.get("HUMAN20_BEARER_TOKEN")
+        self.bearer_token = _normalize_bearer_token(bearer_token or os.environ.get("HUMAN20_BEARER_TOKEN") or "")
         self.timeout = timeout
         self.session_id: str | None = None
         if not self.bearer_token:
@@ -154,6 +154,13 @@ class Human20McpClient:
                 except json.JSONDecodeError:
                     return {"text": text}
         return result
+
+
+def _normalize_bearer_token(token: str) -> str:
+    normalized = token.strip()
+    if normalized.lower().startswith("bearer "):
+        normalized = normalized[7:].strip()
+    return normalized
 
 
 def main() -> int:
