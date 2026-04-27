@@ -71,6 +71,14 @@ class Human20HelperEntrypointTest(unittest.TestCase):
         self.assertEqual(result["transcriptChunks"], 1)
         self.assertIn("get_homework_progress", result["sources"])
 
+    def test_entrypoint_infers_verify_mode(self) -> None:
+        mode, lesson, since = entrypoint.infer_mode('проверь, что я сделал по уроку 3')
+        self.assertEqual((mode, lesson, since), ('verify', 'lesson-3', None))
+
+    def test_entrypoint_infers_next_action_mode(self) -> None:
+        mode, lesson, since = entrypoint.infer_mode('веди дальше')
+        self.assertEqual((mode, lesson, since), ('next-action', None, None))
+
 
 if __name__ == "__main__":
     unittest.main()
