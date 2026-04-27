@@ -1,4 +1,4 @@
-# Human2 Helper Skill
+# Human20 Helper Skill
 
 Public Codex/OpenClaw-compatible skill for working with the Human20 API/MCP surface.
 
@@ -7,8 +7,8 @@ This repository contains no secrets. Provide your own `HUMAN20_BEARER_TOKEN` loc
 ## Setup
 
 ```powershell
-git clone https://github.com/evgyur/human2-helper.git
-cd human2-helper
+git clone https://github.com/evgyur/human20-helper.git
+cd human20-helper
 Copy-Item .env.example .env
 ```
 
@@ -18,6 +18,9 @@ Fill `.env`:
 HUMAN20_BEARER_TOKEN=your-token
 HUMAN20_MCP_URL=https://human20.app/mcp
 ```
+
+`HUMAN20_BEARER_TOKEN` can be either the raw token from the Human20 profile or `Bearer <token>`.
+The helper normalizes both forms before sending requests.
 
 ## Commands
 
