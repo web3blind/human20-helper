@@ -20,6 +20,7 @@ EXPECTED_TOOLS = {
     "get_content_detail",
     "get_transcript",
     "get_homework_progress",
+    "get_homework_catalog",
     "preview_user_message",
     "send_user_message",
 }
@@ -85,6 +86,7 @@ def lesson_context(client: Human20McpClient, item_id: str, user_id: str | None) 
     detail = client.structured_tool("get_content_detail", {"item_id": item_id})
     transcript = client.structured_tool("get_transcript", {"item_id": item_id})
     homework = client.structured_tool("get_homework_progress", {})
+    homework_catalog = client.structured_tool("get_homework_catalog", {"lesson_id": item_id})
 
     item = detail.get("item", {}) if isinstance(detail, dict) else {}
     attachments = detail.get("attachments", []) if isinstance(detail, dict) else []
@@ -97,7 +99,8 @@ def lesson_context(client: Human20McpClient, item_id: str, user_id: str | None) 
         "transcriptChunks": len(transcript_items) if isinstance(transcript_items, list) else None,
         "transcript": transcript_items,
         "homework": homework,
-        "sources": ["get_content_detail", "get_transcript", "get_homework_progress"],
+        "homeworkCatalog": homework_catalog,
+        "sources": ["get_content_detail", "get_transcript", "get_homework_progress", "get_homework_catalog"],
     }
 
 

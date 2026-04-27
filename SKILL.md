@@ -27,6 +27,9 @@ HUMAN20_BEARER_TOKEN=
 HUMAN20_MCP_URL=https://human20.app/mcp
 ```
 
+`HUMAN20_BEARER_TOKEN` may contain either the raw Human20 profile token or `Bearer <token>`.
+The helper strips an accidental `Bearer ` prefix before building the Authorization header.
+
 ## Guardrails
 
 - Use only documented Human20 API/MCP tools.

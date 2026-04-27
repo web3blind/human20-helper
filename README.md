@@ -1,4 +1,4 @@
-# human20-helper
+# Human20 Helper Skill
 
 MVP helper для Human20.
 
@@ -20,21 +20,26 @@ Source of truth теперь находится прямо в `skills/human20-he
 
 Поддерживаются 2 способа:
 
-1. Через переменные окружения
-2. Через локальный `.env` рядом со скриптами, то есть в корне skill-проекта `skills/human20-helper/.env`
+1. Через переменные окружения.
+2. Через локальный `.env` рядом со скриптами, то есть в корне skill-проекта `skills/human20-helper/.env`.
 
 Используются переменные:
+
 - `HUMAN20_BEARER_TOKEN`
 - `HUMAN20_MCP_URL` (optional, по умолчанию `https://human20.app/mcp`)
 
-Важно:
-- можно указывать как сам токен,
-- так и строку вида `Bearer <token>`;
-- helper нормализует это автоматически.
+`HUMAN20_BEARER_TOKEN` can be either the raw token from the Human20 profile or `Bearer <token>`.
+The helper normalizes both forms before sending requests.
 
-## Скрипты
+```powershell
+git clone https://github.com/evgyur/human20-helper.git
+cd human20-helper
+Copy-Item .env.example .env
+```
 
-### 1. Direct MCP client
+## Commands
+
+Direct MCP client:
 
 ```bash
 python3 skills/human20-helper/scripts/human20_mcp_client.py tools/list
@@ -42,57 +47,46 @@ python3 skills/human20-helper/scripts/human20_mcp_client.py tools/call --tool ge
 python3 skills/human20-helper/scripts/human20_mcp_client.py tools/call --tool get_progress
 ```
 
-### 2. Local evidence audit
+Local evidence audit:
 
 ```bash
 python3 skills/human20-helper/scripts/local_evidence.py
 ```
 
-### 3. Basic helper flow
-
 Human-readable summary:
+
 ```bash
 python3 skills/human20-helper/scripts/helper_flow.py --mode human
 ```
 
 What changed since date:
+
 ```bash
 python3 skills/human20-helper/scripts/helper_flow.py --mode changed-since --since 2026-04-01T00:00:00Z
 ```
 
 Continuation for one lesson:
+
 ```bash
 python3 skills/human20-helper/scripts/helper_flow.py --mode continue --lesson lesson-4
 ```
 
 Test-only trainer/orchestrator mode:
+
 ```bash
 python3 skills/human20-helper/scripts/helper_flow.py --mode test-trainer
 ```
 
-### 4. Smart entrypoint
+Smart entrypoint:
 
-Summary / current state:
 ```bash
 python3 skills/human20-helper/scripts/entrypoint.py "где я сейчас"
-```
-
-What's new:
-```bash
 python3 skills/human20-helper/scripts/entrypoint.py "что нового"
-```
-
-Continuation for one lesson:
-```bash
 python3 skills/human20-helper/scripts/entrypoint.py "урок 4"
-```
-
-Test-only trainer/orchestrator mode:
-```bash
 python3 skills/human20-helper/scripts/entrypoint.py "тестовый режим"
 ```
 
-При этом старые технические команды тоже поддерживаются:
+Старые технические команды тоже поддерживаются:
 
 ```bash
 python3 skills/human20-helper/scripts/entrypoint.py status
@@ -101,29 +95,29 @@ python3 skills/human20-helper/scripts/entrypoint.py chat-search "openclaw"
 python3 skills/human20-helper/scripts/entrypoint.py lesson-context lesson-1 --user-id tg:123
 ```
 
+## Homework sync
+
+Human20 MCP now exposes `get_homework_catalog`, which returns the canonical task catalog for a lesson:
+
+- `task_id`
+- `label`
+- `description`
+- `group`
+- `completed`
+
+Helper write-back still stays guarded:
+
+- read live state first;
+- verify local evidence;
+- write only when confidence is high;
+- verify live state after write;
+- block write-back if live task ids contradict expected lesson tasks.
+
 ## Ограничения текущей фазы
 
 - guided progression уже поднят в runtime, но это ещё не полноценный beginner-first course companion;
-- homework-aware write-back уже встроен в guided flow, но только при высокой уверенности и только через локальный mapping `lesson_rules.json`;
 - test-only trainer mode не пишет в Human20 и нужен только как безопасная симуляция;
 - evidence engine пока опирается на фиксированные локальные признаки и ещё требует дальнейшего усиления.
-
-### Важный нюанс по homework sync
-
-Сейчас helper умеет автоматически синхронизировать homework/progress только потому, что знает ожидаемые `task_id` из локального `lesson_rules.json`.
-
-Что приходит live:
-- `get_homework_progress` даёт уже отмеченные `task_id`;
-- `get_content_detail` / `sections` / `promptCards` дают человеческий текст заданий.
-
-Чего пока не хватает для полностью нативной системы:
-- канонического API-поля или tool, который отдаёт для каждого урока полный каталог homework tasks:
-  - `task_id`
-  - `label`
-  - `description`
-  - `completed`
-
-Пока такого каталога нет, helper использует semi-manual mapping и специально блокирует write-back, если live `task_id` начинают расходиться с локальным ожиданием.
 
 ## Safety
 

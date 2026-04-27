@@ -23,15 +23,55 @@ def is_verified_for_sync(local_item):
     return local_item.get('status') == 'auto-pass' and all(item.get('matched') for item in required_verdicts)
 
 
-def build_auto_sync_plan(progress, homework_progress, local):
+def _catalog_task_ids(catalog):
+    if not isinstance(catalog, dict):
+        return []
+    tasks = catalog.get('tasks')
+    if not isinstance(tasks, list):
+        return []
+    return [task.get('task_id') for task in tasks if isinstance(task, dict) and task.get('task_id')]
+
+
+def _catalog_completed_task_ids(catalog):
+    if not isinstance(catalog, dict):
+        return []
+    tasks = catalog.get('tasks')
+    if not isinstance(tasks, list):
+        return []
+    return [
+        task.get('task_id')
+        for task in tasks
+        if isinstance(task, dict) and task.get('task_id') and task.get('completed') is True
+    ]
+
+
+def fetch_homework_catalogs(client, local):
+    catalogs = {}
+    for lesson in local.get('lessons', []):
+        lesson_id = lesson.get('id')
+        if lesson_id:
+            catalogs[lesson_id] = safe_call(client, 'get_homework_catalog', {'lesson_id': lesson_id})
+    return catalogs
+
+
+def build_auto_sync_plan(progress, homework_progress, local, homework_catalogs=None):
     rule_map = rules_map()
     completed_items = set(progress.get('completedItems', [])) if isinstance(progress, dict) else set()
     homework_map = (homework_progress or {}).get('progress', {}) if isinstance(homework_progress, dict) else {}
+    homework_catalogs = homework_catalogs or {}
     plan = []
     for lesson in local.get('lessons', []):
         lesson_id = lesson['id']
-        expected_tasks = rule_map.get(lesson_id, {}).get('homeworkTaskIds', [])
-        completed_tasks = set(homework_map.get(lesson_id, []))
+        catalog = homework_catalogs.get(lesson_id)
+        catalog_tasks = _catalog_task_ids(catalog)
+        if catalog_tasks:
+            expected_tasks = catalog_tasks
+            completed_tasks = set(_catalog_completed_task_ids(catalog))
+            mapping_source = 'get_homework_catalog'
+        else:
+            expected_tasks = rule_map.get(lesson_id, {}).get('homeworkTaskIds', [])
+            completed_tasks = set(homework_map.get(lesson_id, []))
+            mapping_source = 'lesson_rules.json'
         eligible = is_verified_for_sync(lesson)
         unexpected_live_tasks = sorted(task_id for task_id in completed_tasks if task_id not in expected_tasks)
         mapping_complete = bool(expected_tasks)
@@ -49,7 +89,7 @@ def build_auto_sync_plan(progress, homework_progress, local):
             'eligible': eligible,
             'syncSafe': sync_safe,
             'skipReason': skip_reason,
-            'mappingSource': 'lesson_rules.json',
+            'mappingSource': mapping_source,
             'unexpectedLiveTaskIds': unexpected_live_tasks,
             'expectedHomeworkTaskIds': expected_tasks,
             'markComplete': sync_safe and lesson_id not in completed_items,
@@ -59,8 +99,8 @@ def build_auto_sync_plan(progress, homework_progress, local):
     return plan
 
 
-def run_auto_sync(client, progress, homework_progress, local):
-    plan = build_auto_sync_plan(progress, homework_progress, local)
+def run_auto_sync(client, progress, homework_progress, local, homework_catalogs=None):
+    plan = build_auto_sync_plan(progress, homework_progress, local, homework_catalogs)
     applied = []
     skipped = []
     errors = []
@@ -621,7 +661,8 @@ def main():
     onboarding = safe_call(client, 'get_onboarding')
     digest = safe_call(client, 'get_digest')
     homework_progress = safe_call(client, 'get_homework_progress')
-    sync_result = run_auto_sync(client, progress, homework_progress, local)
+    homework_catalogs = fetch_homework_catalogs(client, local)
+    sync_result = run_auto_sync(client, progress, homework_progress, local, homework_catalogs)
     progress = sync_result.get('progress', progress)
     homework_progress = sync_result.get('homework', homework_progress)
 

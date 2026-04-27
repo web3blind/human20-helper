@@ -156,6 +156,34 @@ class Human20HelperFlowTests(unittest.TestCase):
         self.assertIn('l1-2', lesson1['missingHomeworkTaskIds'])
         self.assertFalse(lesson2['eligible'])
 
+    def test_build_auto_sync_plan_prefers_live_homework_catalog(self):
+        local = {
+            'lessons': [
+                {
+                    'id': 'lesson-1',
+                    'status': 'auto-pass',
+                    'requiredEvidenceVerdicts': [{'matched': True}],
+                }
+            ]
+        }
+        progress = {'completedItems': []}
+        homework = {'progress': {'lesson-1': ['legacy-local-value']}}
+        catalogs = {
+            'lesson-1': {
+                'lesson_id': 'lesson-1',
+                'tasks': [
+                    {'task_id': 'l1-1', 'label': 'Task 1', 'completed': True},
+                    {'task_id': 'l1-2', 'label': 'Task 2', 'completed': False},
+                ],
+            }
+        }
+        plan = helper_flow.build_auto_sync_plan(progress, homework, local, catalogs)
+        lesson1 = next(x for x in plan if x['lessonId'] == 'lesson-1')
+        self.assertEqual(lesson1['mappingSource'], 'get_homework_catalog')
+        self.assertTrue(lesson1['syncSafe'])
+        self.assertEqual(lesson1['expectedHomeworkTaskIds'], ['l1-1', 'l1-2'])
+        self.assertEqual(lesson1['missingHomeworkTaskIds'], ['l1-2'])
+
     def test_build_auto_sync_plan_blocks_on_unexpected_live_task_ids(self):
         local = {
             'lessons': [
