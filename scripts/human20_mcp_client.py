@@ -141,8 +141,8 @@ class Human20McpClient:
     def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
         return self.call("tools/call", {"name": name, "arguments": arguments or {}})
 
-    def structured_tool(self, name: str, arguments: dict[str, Any] | None = None) -> Any:
-        result = self.call_tool(name, arguments).get("result", {})
+    def extract_structured(self, tool_result: dict[str, Any]) -> Any:
+        result = tool_result.get("result", {})
         if "structuredContent" in result:
             return result["structuredContent"]
         content = result.get("content") or []
@@ -154,6 +154,9 @@ class Human20McpClient:
                 except json.JSONDecodeError:
                     return {"text": text}
         return result
+
+    def structured_tool(self, name: str, arguments: dict[str, Any] | None = None) -> Any:
+        return self.extract_structured(self.call_tool(name, arguments))
 
 
 def _normalize_bearer_token(token: str) -> str:

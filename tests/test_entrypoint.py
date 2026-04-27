@@ -21,6 +21,7 @@ class StubClient:
                     {"name": "get_onboarding"},
                     {"name": "get_pulse"},
                     {"name": "get_workshop_chat_json"},
+                    {"name": "get_homework_catalog"},
                     {"name": "preview_user_message"},
                     {"name": "send_user_message"},
                 ]
@@ -51,6 +52,13 @@ class StubClient:
             return [{"text": "hello"}]
         if name == "get_homework_progress":
             return {"progress": {}}
+        if name == "get_homework_catalog":
+            return {
+                "lesson_id": arguments.get("lesson_id"),
+                "lesson_title": "Lesson",
+                "lesson_number": 1,
+                "tasks": [{"task_id": "l1-1", "label": "Task", "completed": False}],
+            }
         raise AssertionError(name)
 
 
@@ -71,6 +79,16 @@ class Human20HelperEntrypointTest(unittest.TestCase):
         self.assertEqual(result["title"], "Lesson")
         self.assertEqual(result["transcriptChunks"], 1)
         self.assertIn("get_homework_progress", result["sources"])
+        self.assertIn("get_homework_catalog", result["sources"])
+        self.assertEqual(result["homeworkCatalog"]["tasks"][0]["task_id"], "l1-1")
+
+    def test_entrypoint_infers_verify_mode(self) -> None:
+        mode, lesson, since = entrypoint.infer_mode('проверь, что я сделал по уроку 3')
+        self.assertEqual((mode, lesson, since), ('verify', 'lesson-3', None))
+
+    def test_entrypoint_infers_next_action_mode(self) -> None:
+        mode, lesson, since = entrypoint.infer_mode('веди дальше')
+        self.assertEqual((mode, lesson, since), ('next-action', None, None))
 
     def test_client_accepts_token_with_bearer_prefix(self) -> None:
         client = human20_mcp_client.Human20McpClient(

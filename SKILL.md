@@ -12,6 +12,12 @@ metadata:
 
 Use this skill when an agent needs to understand or operate against Human20 through the official API/MCP surface.
 
+Current scope:
+- inspect workshop state and content;
+- read lesson detail/transcripts/homework/favorites/search results;
+- compare local OpenClaw state against lesson progression rules;
+- guide the user through a test-safe trainer/orchestrator flow for lesson progression.
+
 The skill is intentionally public and contains no secrets. Configure access through local environment variables or a local `.env` file that is not committed.
 
 Required local configuration:
@@ -43,6 +49,9 @@ python scripts/entrypoint.py where-am-i --user-id tg:123
 python scripts/entrypoint.py what-new
 python scripts/entrypoint.py chat-search "openclaw"
 python scripts/entrypoint.py lesson-context lesson-1 --user-id tg:123
+python scripts/entrypoint.py "где я сейчас"
+python scripts/entrypoint.py "урок 4"
+python scripts/entrypoint.py "тестовый режим"
 ```
 
 ## What The Skill Can Inspect
@@ -54,4 +63,6 @@ python scripts/entrypoint.py lesson-context lesson-1 --user-id tg:123
 - lesson and meeting details;
 - transcripts and attachments;
 - homework progress;
+- local lesson-evidence checks against runtime rules;
+- test-safe lesson continuation / trainer flow;
 - backend-owned push preview/send tools, when enabled by the API.
